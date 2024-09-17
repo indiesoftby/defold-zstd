@@ -1,0 +1,39 @@
+- name: zstd
+  type: table
+  desc: The Zstandard Compression Library for Defold
+  members:
+
+  - name: version
+    type: function
+    desc: Returns the version of the Zstandard library
+    returns:
+    - name: version
+      type: string
+
+  - name: compress
+    type: function
+    desc: Compresses a string.
+    parameters:
+    - name: data
+      type: string
+      desc: The data to compress
+    - name: level
+      type: number
+      desc: Optional compression level (default is 3, maximum is 22)
+      optional: true
+    returns:
+    - name: compressed_data
+      type: string
+      desc: The compressed data
+
+  - name: decompress
+    type: function
+    desc: Decompresses a string.
+    parameters:
+    - name: data
+      type: string
+      desc: The data to decompress
+    returns:
+    - name: decompressed_data
+      type: string
+      desc: The decompressed data
