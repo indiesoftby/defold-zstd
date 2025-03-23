@@ -1,11 +1,36 @@
-function init(self)
-    print("VERSION", zstd.version())
+local example_data = require("example.example_data")
 
-    local str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+local start_time = nil
+
+local function measure_time()
+    if start_time == nil then
+        start_time = socket.gettime()
+        return
+    end
+    local end_time = socket.gettime()
+    print("...time", string.format("%.03f ms", (end_time - start_time) * 1000))
+    start_time = end_time
+end
+
+function init(self)
+    print("zstd version", zstd.version())
+
+    local str = example_data
     local compressed = zstd.compress(str)
     local decompressed = zstd.decompress(compressed)
     assert(str == decompressed)
-    print(#str,"vs",#compressed,"vs",#zstd.compress(str, 22))
+    print("original", #str)
+    measure_time()
+    print("compressed (default)", #zstd.compress(str))
+    measure_time()
+    print("compressed (level 22)", #zstd.compress(str, 22))
+    measure_time()
+    print("compressed (zlib)", #zlib.deflate(str))
+    measure_time()
+
+    if sys.get_config_string("bootstrap.exit_immediately") then
+        sys.exit(0)
+    end
 end
 
 function final(self)
