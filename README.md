@@ -1,3 +1,5 @@
+[![Zstd Cover](cover.jpg)](https://github.com/indiesoftby/defold-zstd)
+
 # Zstandard Compression for Defold
 
 This is a native extension for [the Defold game engine](https://defold.com/) that allows you to use Zstandard to compress and decompress strings in your Lua code. The included version of Zstd is 1.5.7.
