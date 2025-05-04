@@ -2,13 +2,13 @@ local example_data = require("example.example_data")
 
 local start_time = nil
 
-local function measure_time()
+local function measure_time(times)
     if start_time == nil then
         start_time = socket.gettime()
         return
     end
     local end_time = socket.gettime()
-    print("...time", string.format("%.03f ms", (end_time - start_time) * 1000))
+    print("...time", string.format("%.03f ns", (end_time - start_time) * 1000000 / times))
     start_time = end_time
 end
 
@@ -21,12 +21,22 @@ function init(self)
     assert(str == decompressed)
     print("original", #str)
     measure_time()
-    print("compressed (default)", #zstd.compress(str))
-    measure_time()
-    print("compressed (level 22)", #zstd.compress(str, 22))
-    measure_time()
-    print("compressed (zlib)", #zlib.deflate(str))
-    measure_time()
+    local size = 0
+    for i = 1, 20000 do
+        size = #zstd.compress(str)
+    end
+    print("compressed (zstd default)", size)
+    measure_time(20000)
+    for i = 1, 500 do
+        size = #zstd.compress(str, 22)
+    end
+    print("compressed (zstd level 22)", size)
+    measure_time(500)
+    for i = 1, 20000 do
+        size = #zlib.deflate(str)
+    end
+    print("compressed (zlib)", size)
+    measure_time(20000)
 
     if sys.get_config_string("bootstrap.exit_immediately") then
         sys.exit(0)
