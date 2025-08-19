@@ -51,6 +51,10 @@ Decompresses a string.
 **Returns:**
 - `string`: The decompressed data.
 
+## Maintainer Notes
+
+The Zstd library is assembled into a single file `zstd.c` using the script `./build/single_file_libs/create_single_file_library.sh` that comes with the library's source code. Also, to work around build issues on Android due to the qsort_r function, the dictBuilder/* lines are commented out in the `zstd-in.c` file.
+
 ## License
 
 This project is licensed under the BSD 3-Clause License. See the LICENSE and LICENSE.zstd files for details.
