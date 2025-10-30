@@ -15,10 +15,20 @@ end
 function init(self)
     print("zstd version", zstd.version())
 
+    print("TEST IN-MEMORY COMPRESS/DECOMPRESS")
+
     local str = example_data
     local compressed = zstd.compress(str)
     local decompressed = zstd.decompress(compressed)
     assert(str == decompressed)
+
+    print("TEST UNKNOWN FRAME SIZE DECOMPRESS")
+
+    local zst_contents = zstd.decompress(sys.load_resource("/example/test.tar.zst"))
+    assert(#zst_contents > 0)
+
+    print("BENCHMARK")
+
     print("original", #str)
     measure_time()
     local size = 0
@@ -37,6 +47,8 @@ function init(self)
     end
     print("compressed (zlib)", size)
     measure_time(20000)
+
+    print("DONE")
 
     if sys.get_config_string("bootstrap.exit_immediately") then
         sys.exit(0)

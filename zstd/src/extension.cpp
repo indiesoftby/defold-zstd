@@ -33,24 +33,95 @@ static int Zstd_Decompress(lua_State* L)
 {
     size_t src_len;
     const char* src = luaL_checklstring(L, 1, &src_len);
-    size_t dst_len  = ZSTD_getFrameContentSize(src, src_len);
-    if (dst_len == ZSTD_CONTENTSIZE_ERROR || dst_len == ZSTD_CONTENTSIZE_UNKNOWN)
+
+    // Check decompressed data size
+    unsigned long long content_size = ZSTD_getFrameContentSize(src, src_len);
+    if (content_size == ZSTD_CONTENTSIZE_ERROR)
     {
         return luaL_error(L, "Invalid content size");
     }
-    char* dst = (char*)malloc(dst_len);
-    if (!dst)
+
+    // If size is known, use simple decompression
+    if (content_size != ZSTD_CONTENTSIZE_UNKNOWN)
     {
+        char* dst = (char*)malloc(content_size);
+        if (!dst)
+        {
+            return luaL_error(L, "Failed to allocate memory");
+        }
+
+        size_t size = ZSTD_decompress(dst, content_size, src, src_len);
+        if (ZSTD_isError(size))
+        {
+            free(dst);
+            return luaL_error(L, "Failed to decompress: %s", ZSTD_getErrorName(size));
+        }
+
+        lua_pushlstring(L, dst, size);
+        free(dst);
+        return 1;
+    }
+
+    // If size is unknown, use streaming decompression
+    ZSTD_DCtx* dctx = ZSTD_createDCtx();
+    if (!dctx)
+    {
+        return luaL_error(L, "Failed to create decompression context");
+    }
+
+    // Initial buffer size
+    size_t buffer_size = ZSTD_DStreamOutSize();
+    size_t total_size = 0;
+    size_t capacity = buffer_size;
+    char* result = (char*)malloc(capacity);
+
+    if (!result)
+    {
+        ZSTD_freeDCtx(dctx);
         return luaL_error(L, "Failed to allocate memory");
     }
-    size_t size = ZSTD_decompress(dst, dst_len, src, src_len);
-    if (ZSTD_isError(size))
+
+    ZSTD_inBuffer input = { src, src_len, 0 };
+
+    while (input.pos < input.size)
     {
-        free(dst);
-        return luaL_error(L, "Failed to decompress: %s", ZSTD_getErrorName(size));
+        // Check if buffer needs to be expanded
+        if (total_size + buffer_size > capacity)
+        {
+            capacity *= 2;
+            char* new_result = (char*)realloc(result, capacity);
+            if (!new_result)
+            {
+                free(result);
+                ZSTD_freeDCtx(dctx);
+                return luaL_error(L, "Failed to reallocate memory");
+            }
+            result = new_result;
+        }
+
+        ZSTD_outBuffer output = { result + total_size, capacity - total_size, 0 };
+
+        size_t ret = ZSTD_decompressStream(dctx, &output, &input);
+        if (ZSTD_isError(ret))
+        {
+            free(result);
+            ZSTD_freeDCtx(dctx);
+            return luaL_error(L, "Failed to decompress: %s", ZSTD_getErrorName(ret));
+        }
+
+        total_size += output.pos;
+
+        // If ret == 0, decompression is complete
+        if (ret == 0)
+        {
+            break;
+        }
     }
-    lua_pushlstring(L, dst, size);
-    free(dst);
+
+    ZSTD_freeDCtx(dctx);
+
+    lua_pushlstring(L, result, total_size);
+    free(result);
     return 1;
 }
 

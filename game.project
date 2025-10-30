@@ -11,6 +11,7 @@ high_dpi = 1
 
 [project]
 title = zstd_example
+custom_resources = /example/test.tar.zst
 
 [library]
 include_dirs = zstd
