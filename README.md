@@ -42,6 +42,10 @@ Compresses a string.
 **Returns:**
 - `string`: The compressed data
 
+**Raises:**
+- Raises a Lua error if memory allocation fails: `"Failed to allocate memory"`
+- Raises a Lua error if compression fails: `"Failed to compress: <error_name>"` (where `<error_name>` is the ZSTD error name)
+
 ### `zstd.decompress(data)`
 Decompresses a string.
 
@@ -50,6 +54,13 @@ Decompresses a string.
 
 **Returns:**
 - `string`: The decompressed data.
+
+**Raises:**
+- Raises a Lua error if the content size is invalid: `"Invalid content size"`
+- Raises a Lua error if memory allocation fails: `"Failed to allocate memory"`
+- Raises a Lua error if decompression context creation fails: `"Failed to create decompression context"`
+- Raises a Lua error if memory reallocation fails: `"Failed to reallocate memory"`
+- Raises a Lua error if decompression fails: `"Failed to decompress: <error_name>"` (where `<error_name>` is the ZSTD error name)
 
 ## Maintainer Notes
 
